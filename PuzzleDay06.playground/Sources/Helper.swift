@@ -27,7 +27,8 @@ func process(input: inout [Int]) {
     var rhsArr = Array(input[(maxValueIndex + 1)...])
     var lhsArr = Array(input[..<maxValueIndex])
     
-    while maxValue > 0 && maxValue >= [rhsArr.count, lhsArr.count].max()! {
+    // TODO: Write condition that can satisfy the sample input as well as advent input
+    while maxValue >= (lhsArr + rhsArr).max()! {
         if rhsArr.count > 0 && maxValue > 0 {
             for (index, value) in rhsArr.enumerated() {
                 if maxValue > 0 {
@@ -52,20 +53,24 @@ func process(input: inout [Int]) {
     }
 }
 
-public func processMemoryBank(_ inputArr: [Int]) -> ([Int], Int) {
+public typealias CompletionBlock = ([[Int]], [Int], Int) -> Void
+
+public func processMemoryBank(queue: DispatchQueue = DispatchQueue.global(), _ inputArr: [Int], _ completion: @escaping CompletionBlock) {
     
-    var steps = 0
-    
-    var currentInput = inputArr
-    var memoryBanks = MemoryBanks()
-    
-    repeat {
-        process(input: &currentInput)
-        memoryBanks.add(currentInput)
-        steps++
-    }while memoryBanks.shouldAdd(currentInput)
-    
-    return (currentInput, steps)
+    queue.async {
+        var steps = 0
+        
+        var currentInput = inputArr
+        var memoryBanks = MemoryBanks()
+        
+        repeat {
+            process(input: &currentInput)
+            memoryBanks.add(currentInput)
+            steps++
+        }while memoryBanks.shouldAdd(currentInput)
+        
+        completion(memoryBanks.block,currentInput, steps)
+    }
 }
 
 

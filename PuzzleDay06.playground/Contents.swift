@@ -2,24 +2,38 @@
 
 import Foundation
 import XCTest
-
-let adventInput = [4, 10, 4, 1, 8, 4, 9, 14, 5, 1, 14, 15, 0, 15, 3, 5]
-
-let sampleInput = [0, 2, 7, 0]
+import PlaygroundSupport
 
 class PuzzleDay06Test: XCTestCase {
     
+    override func setUp() {
+        super.setUp()
+        PlaygroundPage.current.needsIndefiniteExecution = true
+    }
+    
+    override func tearDown() {
+        super.tearDown()
+        PlaygroundPage.current.finishExecution()
+    }
+    
     func testAgainstSampleInput() {
-        let memoryBankResult = processMemoryBank(sampleInput)
-        XCTAssertEqual(memoryBankResult.0, [2,4,1,2])
-        XCTAssertEqual(memoryBankResult.1, 5)
+        let puzzleExpectation = expectation(description: "puzzle expectation")
+        processMemoryBank(sampleInput0) { (memoryBlocks, repeatedBlock, steps) in
+            XCTAssertEqual(repeatedBlock, [2,4,1,2])
+            XCTAssertEqual(steps, 5)
+            puzzleExpectation.fulfill()
+        }
+        wait(for: [puzzleExpectation], timeout: 2)
     }
 }
 
-
 //PuzzleDay06Test().testAgainstSampleInput()
 
+PlaygroundPage.current.needsIndefiniteExecution = true
 
-let memoryBankResult = processMemoryBank(sampleInput)
-memoryBankResult.0
-memoryBankResult.1
+processMemoryBank(sampleInput1) { (memoryBlocks, repeatedBlock, steps) in
+    memoryBlocks
+    repeatedBlock
+    steps
+    PlaygroundPage.current.finishExecution()
+}
