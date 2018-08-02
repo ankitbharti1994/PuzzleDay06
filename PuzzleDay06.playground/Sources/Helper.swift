@@ -4,62 +4,76 @@ struct MemoryBanks {
     
     private(set) var block: [[Int]] = []
     
-    mutating func add(_ block: [Int]) {
+    public init() {
+        
+    }
+    
+    public mutating func add(_ block: [Int]) {
         self.block.append(block)
     }
     
-    mutating func shouldAdd(_ memoryBlock: [Int]) -> Bool {
+    public mutating func shouldAdd(_ memoryBlock: [Int]) -> Bool {
         let specificMemoryBlocks = block.filter { return $0 == memoryBlock }
         return specificMemoryBlocks.count <= 1
     }
 }
 
-public func processMemoryBlock(queue: DispatchQueue = DispatchQueue.global(), input: [Int], _ completion: @escaping ([Int],Int) -> Void) {
+func process(input: inout [Int]) {
     
-    queue.async {
-        var memoryBanks = MemoryBanks()
-        let length = input.count - 1
-        var latestInput = input
-        
-        while memoryBanks.shouldAdd(latestInput) {
-            var maxValue = latestInput.max()!
-            let indexOfMaxValue = latestInput.index(of: maxValue)!
-            var index = indexOfMaxValue + 1
-            
-            var affectedValueCount = 0
-            
-            outer: while maxValue > 0 {
-                if (index < input.count || index < indexOfMaxValue) && (index != indexOfMaxValue) {
-                    latestInput[index] += 1
-                    index++
+    guard input.count > 0 else { return }
+    var maxValue = input.max()!
+    let maxValueIndex = input.index(of: maxValue)!
+    
+    var rhsArr = Array(input[(maxValueIndex + 1)...])
+    var lhsArr = Array(input[..<maxValueIndex])
+    
+    while maxValue > 0 && maxValue >= [rhsArr.count, lhsArr.count].max()! {
+        if rhsArr.count > 0 && maxValue > 0 {
+            for (index, value) in rhsArr.enumerated() {
+                if maxValue > 0 {
+                    rhsArr[index] = value + 1
                     maxValue--
-                    affectedValueCount++
-                }else if index == indexOfMaxValue && index <= length {
-                    // TODO:- break if the distribution completed
-                    if affectedValueCount % length == 0 && maxValue < length {
-                        //                        latestInput[indexOfMaxValue] = maxValue
-                        //                        memoryBanks.add(latestInput)
-                        break outer
-                    }else {
-                        index++
-                    }
-                }else {
-                    index = 0
+                    input[maxValueIndex] = maxValue
                 }
             }
-            latestInput[indexOfMaxValue] = maxValue
-            memoryBanks.add(latestInput)
+            input.replaceSubrange((maxValueIndex + 1)..., with: rhsArr)
         }
-        completion(latestInput,memoryBanks.block.count)
+        
+        if lhsArr.count > 0 && maxValueIndex > 0 {
+            for (index, value) in lhsArr.enumerated() {
+                if maxValue > 0 {
+                    lhsArr[index] = value + 1
+                    maxValue--
+                    input[maxValueIndex] = maxValue
+                }
+            }
+            input.replaceSubrange(..<maxValueIndex, with: lhsArr)
+        }
     }
 }
 
+public func processMemoryBank(_ inputArr: [Int]) -> ([Int], Int) {
+    
+    var steps = 0
+    
+    var currentInput = inputArr
+    var memoryBanks = MemoryBanks()
+    
+    repeat {
+        process(input: &currentInput)
+        memoryBanks.add(currentInput)
+        steps++
+    }while memoryBanks.shouldAdd(currentInput)
+    
+    return (currentInput, steps)
+}
 
-extension Int {
-    postfix static func --(value: inout Int) {
+
+public extension Int {
+    public postfix static func --(value: inout Int) {
         value = value - 1
     }
-    postfix static func ++(value: inout Int) {
+    public postfix static func ++(value: inout Int) {
         value = value + 1
     }
 }
